@@ -9,7 +9,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { GameEngine } from '../server/GameEngine.ts';
 import { ServerMessage, ZombieType } from '../shared/types.ts';
-import { STAGES, WEAPONS, ZOMBIE_HITBOXES, ZOMBIE_VISUAL_SCALE } from '../shared/config.ts';
+import { STAGES, WEAPONS, ZOMBIE_HITBOXES, ZOMBIE_VISUAL_SCALE, DEFAULT_SETTINGS } from '../shared/config.ts';
+import {
+  dequeueNextFreshBanner,
+  mergeOrCreateScorePopup,
+  formatStreakBadge,
+  QueuedBannerNotification,
+  ArcadeHitPopup,
+} from '../src/game/uiNotificationQueue.ts';
 import themesData from '../shared/themes.json' with { type: 'json' };
 import audioManifest from '../shared/audio.json' with { type: 'json' };
 
@@ -495,6 +502,288 @@ runTest('Server Engine ticks 30 simultaneous zombies and 6 players in under 2ms 
     avgTickMs < 5.0,
     `Expected average tick time < 5.0ms for 30 zombies, got ${avgTickMs.toFixed(3)}ms`
   );
+});
+
+// TEST SUITE 16: Phase 1 Hit-Detection Invariance Regression Test (Fixed Aim Point Matrix & 1-8 Player Slots)
+runTest('Phase 1 Regression: Hit detection results for a fixed set of aim points are 100% invariant across player slots 1..8 and independent of turret position', () => {
+  const engine = createTestEngine();
+
+  // Fixed zombie fixtures at deterministic 3D world coordinates
+  const fixedZombies = [
+    {
+      id: 'reg_normal_center',
+      type: 'normal' as const,
+      x: 0,
+      y: 0,
+      z: -12,
+      hp: 100,
+      maxHp: 100,
+      speed: 1,
+      damage: 8,
+      radius: 1,
+      isFrozen: false,
+      state: 'walking' as const,
+      theme: 'classic' as const,
+    },
+    {
+      id: 'reg_fast_left',
+      type: 'fast' as const,
+      x: -3.2,
+      y: 0,
+      z: -9.5,
+      hp: 80,
+      maxHp: 80,
+      speed: 1.6,
+      damage: 6,
+      radius: 0.9,
+      isFrozen: false,
+      state: 'walking' as const,
+      theme: 'classic' as const,
+    },
+    {
+      id: 'reg_boss_right',
+      type: 'boss' as const,
+      x: 2.5,
+      y: 0,
+      z: -14.0,
+      hp: 1000,
+      maxHp: 1000,
+      speed: 0.7,
+      damage: 25,
+      radius: 1.8,
+      isFrozen: false,
+      state: 'walking' as const,
+      theme: 'classic' as const,
+      weakPoint: { offsetY: 2.35, radius: 0.55, active: true },
+    },
+  ];
+
+  // Fixed set of normalized screen aim points (headshots, body shots, weak-point shots, and misses)
+  const normalHead = engine.projectWorldToScreen(0, 1.72 * ZOMBIE_VISUAL_SCALE, -12);
+  const normalBody = engine.projectWorldToScreen(0, 0.93 * ZOMBIE_VISUAL_SCALE, -12);
+  const fastHead = engine.projectWorldToScreen(-3.2, 1.46 * ZOMBIE_VISUAL_SCALE, -9.5);
+  const bossWeakPoint = engine.projectWorldToScreen(2.5, 2.35 * ZOMBIE_VISUAL_SCALE, -14.0);
+  const bossBody = engine.projectWorldToScreen(2.5, 1.4 * ZOMBIE_VISUAL_SCALE, -14.0);
+
+  const fixedAimMatrix = [
+    {
+      label: 'Normal Zombie Center Headshot',
+      px: Number(normalHead.x.toFixed(5)),
+      py: Number(normalHead.y.toFixed(5)),
+      zombieIdx: 0,
+      expected: { hit: true, isHeadshot: true, isWeakPoint: false },
+    },
+    {
+      label: 'Normal Zombie Center Body Capsule Hit',
+      px: Number(normalBody.x.toFixed(5)),
+      py: Number(normalBody.y.toFixed(5)),
+      zombieIdx: 0,
+      expected: { hit: true, isHeadshot: false, isWeakPoint: false },
+    },
+    {
+      label: 'Fast Zombie Left Lane Headshot',
+      px: Number(fastHead.x.toFixed(5)),
+      py: Number(fastHead.y.toFixed(5)),
+      zombieIdx: 1,
+      expected: { hit: true, isHeadshot: true, isWeakPoint: false },
+    },
+    {
+      label: 'Boss Right Lane Weak-Point Critical Hit',
+      px: Number(bossWeakPoint.x.toFixed(5)),
+      py: Number(bossWeakPoint.y.toFixed(5)),
+      zombieIdx: 2,
+      expected: { hit: true, isHeadshot: true, isWeakPoint: true },
+    },
+    {
+      label: 'Boss Right Lane Lower Torso Hit',
+      px: Number(bossBody.x.toFixed(5)),
+      py: Number(bossBody.y.toFixed(5)),
+      zombieIdx: 2,
+      expected: { hit: true, isHeadshot: false, isWeakPoint: false },
+    },
+    {
+      label: 'Top-Left Sky Miss',
+      px: 0.08,
+      py: 0.08,
+      zombieIdx: 0,
+      expected: { hit: false, isHeadshot: false, isWeakPoint: false },
+    },
+    {
+      label: 'Bottom-Right Road Miss',
+      px: 0.92,
+      py: 0.88,
+      zombieIdx: 1,
+      expected: { hit: false, isHeadshot: false, isWeakPoint: false },
+    },
+  ];
+
+  for (const tc of fixedAimMatrix) {
+    const actual = engine.checkZombieHit(tc.px, tc.py, fixedZombies[tc.zombieIdx]);
+    assert.deepStrictEqual(
+      actual,
+      tc.expected,
+      `Hit result mismatch for "${tc.label}" at (${tc.px}, ${tc.py})`
+    );
+  }
+
+  // Also prove that 8 players across slots 1..8 aiming at the exact same fixed aim point produce identical hit registration
+  engine.spawnBots(8);
+  assert.strictEqual(engine.getPlayers().length, 8, 'Should support up to 8 simultaneous players');
+  engine.startGame(false);
+  (engine as any).phase = 'PLAYING';
+  (engine as any).nextWaveSpawnQueue = [];
+  (engine as any).zombies = [
+    {
+      ...fixedZombies[0],
+      hp: 5000,
+      maxHp: 5000,
+    },
+  ];
+
+  for (const p of engine.getPlayers()) {
+    engine.handleAim(p.id, fixedAimMatrix[0].px, fixedAimMatrix[0].py);
+    engine.handleShoot(p.id);
+    assert.strictEqual(
+      p.stats.shotsHit,
+      1,
+      `Player in slot ${p.slot} (bottom turret ${p.slot}) must register the exact same hit at (${fixedAimMatrix[0].px}, ${fixedAimMatrix[0].py})`
+    );
+    assert.strictEqual(
+      p.stats.headshots,
+      1,
+      `Player in slot ${p.slot} must register the exact same headshot`
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
+// TEST SUITE 17: Phase 2 Central Notification Queue, Popup Merging & Streak Cap
+// ---------------------------------------------------------------------------
+runTest('Phase 2: Central Notification Queue (1 banner at a time, drops >2s stale banners, merges rapid target popups, caps streak at MAX)', () => {
+  const now = 10_000;
+  const staleBanner: QueuedBannerNotification = {
+    id: 'b_stale',
+    text: 'OLD WAVE BANNER',
+    tone: 'cyan',
+    enqueuedAt: now - 2500, // 2.5s old (> 2000ms threshold)
+    durationMs: 1800,
+  };
+  const freshBanner1: QueuedBannerNotification = {
+    id: 'b_fresh_1',
+    text: 'BOSS ELIMINATED',
+    tone: 'amber',
+    enqueuedAt: now - 400,
+    durationMs: 1800,
+  };
+  const freshBanner2: QueuedBannerNotification = {
+    id: 'b_fresh_2',
+    text: 'STAGE 2: BIO-LAB REACTOR',
+    tone: 'emerald',
+    enqueuedAt: now - 100,
+    durationMs: 1800,
+  };
+
+  // Dequeue should skip staleBanner (>2s old), activate freshBanner1, and keep freshBanner2 waiting
+  const res1 = dequeueNextFreshBanner([staleBanner, freshBanner1, freshBanner2], now);
+  assert.ok(res1.next, 'Should activate the first non-stale banner');
+  assert.strictEqual(res1.next!.id, 'b_fresh_1', 'Stale banner older than 2s must be dropped');
+  assert.strictEqual(res1.remaining.length, 1, 'Second fresh banner must wait in queue');
+  assert.strictEqual(res1.remaining[0].id, 'b_fresh_2');
+
+  // Merge rapid hits on the same target into a single updating popup
+  let popups: ArcadeHitPopup[] = [];
+  popups = mergeOrCreateScorePopup(popups, {
+    targetKey: 'z_boss_1',
+    x: 0.5,
+    y: 0.42,
+    points: 160,
+    label: 'HIT!',
+    color: '#22d3ee',
+    headshot: false,
+    now,
+  });
+  assert.strictEqual(popups.length, 1, 'First hit creates 1 popup');
+  assert.strictEqual(popups[0].points, 160);
+  assert.strictEqual(popups[0].hitCount, 1);
+
+  popups = mergeOrCreateScorePopup(popups, {
+    targetKey: 'z_boss_1',
+    x: 0.51,
+    y: 0.41,
+    points: 240,
+    label: 'WEAK POINT!',
+    color: '#facc15',
+    headshot: true,
+    now: now + 150,
+  });
+  assert.strictEqual(popups.length, 1, 'Rapid hits on the same target must merge into 1 popup instead of stacking');
+  assert.strictEqual(popups[0].points, 400, 'Merged popup should sum points (+160 + +240 = +400)');
+  assert.strictEqual(popups[0].hitCount, 2, 'Merged popup should track hitCount = 2');
+  assert.strictEqual(popups[0].headshot, true, 'Merged popup should preserve crit/headshot status');
+
+  // After 800ms expiry, old popups are pruned
+  popups = mergeOrCreateScorePopup(popups, {
+    targetKey: 'z_other_2',
+    x: 0.3,
+    y: 0.5,
+    points: 100,
+    label: 'HIT!',
+    color: '#22d3ee',
+    headshot: false,
+    now: now + 1100,
+  });
+  assert.strictEqual(popups.length, 1, 'Expired popup (>800ms) should be removed automatically');
+  assert.strictEqual(popups[0].targetKey, 'z_other_2');
+
+  // Streak badge cap check (signature: formatStreakBadge(multiplier, combo))
+  const lowStreak = formatStreakBadge(2, 5);
+  assert.strictEqual(lowStreak.isMax, false);
+  assert.strictEqual(lowStreak.label, '2X');
+
+  const maxStreak = formatStreakBadge(8, 45);
+  assert.strictEqual(maxStreak.isMax, true, 'Multiplier at 8x must be flagged as MAX');
+  assert.strictEqual(maxStreak.label, '8X MAX', 'Multiplier must cap with a MAX label');
+});
+
+// ---------------------------------------------------------------------------
+// TEST SUITE 18: Phases 3, 5, 6 & 7 (Default Auto-Fire Off, Bio-Lab Stage Config & F4 Review Scene)
+// ---------------------------------------------------------------------------
+runTest('Phases 3, 5, 6 & 7: Auto-Fire disabled by default, Stage 2 Bio-Lab config-driven props, and F4 deterministic review scene', () => {
+  // Phase 3: Auto-fire is never enabled by default
+  assert.strictEqual(
+    DEFAULT_SETTINGS.autoFire,
+    false,
+    'DEFAULT_SETTINGS.autoFire must be false so auto-fire is never enabled by default in a real game'
+  );
+
+  // Phase 5: Stage 2 (Bio-Lab Reactor) is config-driven with distinct propSet & propList
+  const stage2 = STAGES[1];
+  assert.ok(stage2, 'Stage 2 definition must exist');
+  assert.strictEqual(stage2.name, 'STAGE 2: BIO-LAB REACTOR');
+  assert.strictEqual(stage2.propSet, 'biolab', 'Stage 2 must use the biolab propSet');
+  assert.ok(
+    stage2.propList.includes('containment_tubes') &&
+      stage2.propList.includes('biohazard_signs') &&
+      stage2.propList.includes('steam_vents') &&
+      stage2.propList.includes('reactor_core'),
+    'Stage 2 propList must include containment_tubes, biohazard_signs, steam_vents, and reactor_core'
+  );
+
+  // Phase 6 & 7: Deterministic F4 Review Scene spawns 4 players, Stage 2 Bio-Lab, 1 Boss with weak point, and 4 lane zombies
+  const reviewEngine = createTestEngine();
+  reviewEngine.triggerReviewScene(1);
+  const state = reviewEngine.getWorldState();
+  assert.strictEqual(state.phase, 'PLAYING', 'Review scene should enter PLAYING phase');
+  assert.strictEqual(state.stageIndex, 1, 'Review scene should load Stage 2: Bio-Lab Reactor (stageIndex = 1)');
+  assert.strictEqual(state.stageName, 'STAGE 2: BIO-LAB REACTOR');
+  assert.strictEqual(state.players.length, 4, 'Review scene should spawn 4 active players');
+
+  const boss = state.zombies.find((z) => z.type === 'boss');
+  assert.ok(boss, 'Review scene must include an active Boss zombie');
+  assert.strictEqual(boss.weakPoint?.active, true, 'Boss in review scene must have an active weak point');
+
+  const regularZombies = state.zombies.filter((z) => z.type !== 'boss');
+  assert.strictEqual(regularZombies.length, 4, 'Review scene must include 4 regular zombies across lanes');
 });
 
 console.log('\n----------------------------------------');

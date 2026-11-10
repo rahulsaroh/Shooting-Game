@@ -597,7 +597,7 @@ export const ControllerApp: React.FC = () => {
                     style={{ backgroundColor: c.hex }}
                     className={`h-10 rounded-xl transition transform active:scale-95 flex items-center justify-center font-black text-slate-950 text-xs ${
                       selectedColor === c.hex
-                        ? 'ring-4 ring-white shadow-[0_0_15px_rgba(255,255,255,0.6)] scale-105'
+                        ? 'ring-4 ring-white shadow-md scale-105'
                         : 'opacity-75 hover:opacity-100'
                     }`}
                   >

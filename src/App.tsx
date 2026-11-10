@@ -27,7 +27,9 @@ export default function App() {
     return 'game';
   });
 
-  // Listen to popstate for browser back/forward
+  const [f2DebugVisible, setF2DebugVisible] = useState(false);
+
+  // Listen to popstate for browser back/forward and F2 debug toggle
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.toLowerCase();
@@ -37,8 +39,17 @@ export default function App() {
         setRoute('game');
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'F2' || e.key === 'F2') {
+        setF2DebugVisible((prev) => !prev);
+      }
+    };
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const switchRole = (newRole: 'game' | 'controller') => {
@@ -48,35 +59,38 @@ export default function App() {
 
   return (
     <div className="w-full h-full min-h-screen bg-black text-white relative">
-      {route === 'controller' ? (
-        <ControllerApp />
-      ) : (
-        <GameApp />
-      )}
+      {route === 'controller' ? <ControllerApp /> : <GameApp />}
 
-      {/* Floating Role Switcher Pill in Top-Left Corner for Easy Dev/Preview Testing */}
-      <div className="fixed top-2 left-2 z-50 opacity-40 hover:opacity-100 transition-opacity flex items-center gap-1 bg-neutral-900/90 border border-neutral-800 p-1 rounded-xl text-[11px] font-mono shadow-lg">
-        <button
-          type="button"
-          onClick={() => switchRole('game')}
-          className={`px-2 py-1 rounded-lg flex items-center gap-1 transition ${
-            route === 'game' ? 'bg-cyan-500 text-black font-bold' : 'text-neutral-400 hover:text-white'
-          }`}
-        >
-          <Tv className="w-3 h-3" />
-          <span>TV</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => switchRole('controller')}
-          className={`px-2 py-1 rounded-lg flex items-center gap-1 transition ${
-            route === 'controller' ? 'bg-cyan-500 text-black font-bold' : 'text-neutral-400 hover:text-white'
-          }`}
-        >
-          <Smartphone className="w-3 h-3" />
-          <span>Phone</span>
-        </button>
-      </div>
+      {/* Phase 3: Floating Role Switcher Pill is hidden by default and only visible when Debug Mode [F2] is active */}
+      {f2DebugVisible && (
+        <div className="fixed top-2 left-2 z-50 flex items-center gap-1 bg-neutral-900/95 border border-amber-400/60 p-1 rounded-xl text-[11px] font-mono shadow-lg">
+          <span className="px-1.5 text-amber-300 font-bold">[F2]</span>
+          <button
+            type="button"
+            onClick={() => switchRole('game')}
+            className={`px-2 py-1 rounded-lg flex items-center gap-1 transition cursor-pointer ${
+              route === 'game'
+                ? 'bg-cyan-500 text-black font-bold'
+                : 'text-neutral-400 hover:text-white'
+            }`}
+          >
+            <Tv className="w-3 h-3" />
+            <span>TV</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => switchRole('controller')}
+            className={`px-2 py-1 rounded-lg flex items-center gap-1 transition cursor-pointer ${
+              route === 'controller'
+                ? 'bg-cyan-500 text-black font-bold'
+                : 'text-neutral-400 hover:text-white'
+            }`}
+          >
+            <Smartphone className="w-3 h-3" />
+            <span>Phone</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

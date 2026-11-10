@@ -148,7 +148,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
 
           {/* Giant Flashing "FIRE TO JOIN" Callout (Readable from 3m TV distance) */}
           <div className="pt-2">
-            <div className="inline-block px-10 py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 font-display font-bold text-3xl tracking-widest animate-bounce shadow-[0_0_35px_rgba(255,190,11,0.7)]">
+            <div className="inline-block px-10 py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 font-display font-bold text-3xl tracking-widest animate-bounce shadow-xl">
               🔥 FIRE TO JOIN · PRESS START 🔥
             </div>
           </div>
@@ -190,7 +190,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             <button
               type="button"
               onClick={onUnlockAudio}
-              className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-display font-bold tracking-wider flex items-center gap-2 transition animate-pulse cursor-pointer whitespace-nowrap shrink-0 shadow-[0_0_16px_rgba(255,190,11,0.5)]"
+              className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-display font-bold tracking-wider flex items-center gap-2 transition animate-pulse cursor-pointer whitespace-nowrap shrink-0 shadow-md"
             >
               <Volume2 className="w-4 h-4" />
               <span>CLICK TO START AUDIO</span>

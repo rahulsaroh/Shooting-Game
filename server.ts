@@ -150,6 +150,9 @@ app.post('/api/action', (req, res) => {
       case 'remove_bots':
         gameEngine.removeBots();
         break;
+      case 'trigger_review_scene':
+        gameEngine.triggerReviewScene(msg.stageIndex ?? 1);
+        break;
     }
     res.json({ ok: true, world: gameEngine.getWorldState() });
   } catch (err) {
@@ -317,6 +320,11 @@ wss.on('connection', (ws: WebSocket) => {
 
         case 'remove_bots': {
           gameEngine.removeBots();
+          break;
+        }
+
+        case 'trigger_review_scene': {
+          gameEngine.triggerReviewScene(msg.stageIndex ?? 1);
           break;
         }
 

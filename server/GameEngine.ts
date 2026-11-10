@@ -723,9 +723,14 @@ export class GameEngine {
   }
 
   public spawnBots(count: number) {
+    const usedSlots = new Set(Array.from(this.players.values()).map((p) => p.slot));
     for (let i = 0; i < count; i++) {
-      const slot = this.players.size + 1;
-      const botId = `bot_${Date.now()}_${i}`;
+      if (this.players.size >= 8) break;
+      let slot = 1;
+      while (usedSlots.has(slot)) slot++;
+      usedSlots.add(slot);
+
+      const botId = `bot_${Date.now()}_${i}_${slot}`;
       const color = PLAYER_COLORS[(slot - 1) % PLAYER_COLORS.length].hex;
       const botPlayer: PlayerInfo = {
         id: botId,
@@ -773,6 +778,149 @@ export class GameEngine {
       }
     }
     this.broadcastLobbyUpdate();
+  }
+
+  /**
+   * Phase 7: Deterministic Screenshot / Visual Review Scene (Key F4)
+   * Spawns 4 bots, a Boss with active weak point, 4 zombies across lanes, and sets Stage 2 (Bio-Lab Reactor) by default.
+   */
+  public triggerReviewScene(stageIndex = 1) {
+    this.removeBots();
+    const currentConnected = Array.from(this.players.values()).filter((p) => p.isConnected);
+    const neededBots = Math.max(0, 4 - currentConnected.length);
+    if (neededBots > 0) {
+      this.spawnBots(neededBots);
+    }
+
+    const clampedStage = Math.max(0, Math.min(STAGES.length - 1, stageIndex));
+    this.currentWave = clampedStage * 2 + 1; // Wave 3 = Stage 2: Bio-Lab Reactor
+    this.phase = 'PLAYING';
+    this.barricadeHp = 84;
+    this.maxBarricadeHp = 100;
+    this.nextWaveSpawnQueue = [];
+    this.zombies = [];
+    this.powerups = [];
+
+    const stage = this.getCurrentStage();
+    const activePlayers = Array.from(this.players.values())
+      .filter((p) => p.isConnected)
+      .sort((a, b) => a.slot - b.slot)
+      .slice(0, 4);
+
+    const weapons: WeaponType[] = ['pistol', 'shotgun', 'machine_gun', 'grenade_launcher'];
+    const combos = [
+      { combo: 4, mult: 2, score: 1420, x: 0.34, y: 0.48 },
+      { combo: 9, mult: 4, score: 2890, x: 0.5, y: 0.38 },
+      { combo: 24, mult: 8, score: 5640, x: 0.64, y: 0.46 },
+      { combo: 2, mult: 1, score: 980, x: 0.44, y: 0.52 },
+    ];
+
+    activePlayers.forEach((p, idx) => {
+      const w = weapons[idx % weapons.length];
+      p.weapon = w;
+      p.maxAmmo = WEAPONS[w].maxAmmo;
+      p.ammo = Math.max(2, WEAPONS[w].maxAmmo - 2);
+      p.combo = combos[idx].combo;
+      p.multiplier = combos[idx].mult;
+      p.stats.score = combos[idx].score;
+      p.crosshair.x = combos[idx].x;
+      p.crosshair.y = combos[idx].y;
+    });
+
+    // Spawn deterministic Boss in center lane + 4 zombies across left/right lanes
+    this.zombies.push(
+      {
+        id: 'z_review_boss',
+        type: 'boss',
+        x: 0.0,
+        y: 0,
+        z: -13.5,
+        hp: 520,
+        maxHp: 800,
+        speed: 0.45,
+        damage: 18,
+        radius: 1.8,
+        isFrozen: false,
+        state: 'walking',
+        theme: stage.theme,
+        weakPoint: {
+          offsetY: stage.bossWeakPointOffsetY,
+          radius: stage.bossWeakPointRadius,
+          active: true,
+        },
+      },
+      {
+        id: 'z_review_normal_l',
+        type: 'normal',
+        x: -3.8,
+        y: 0,
+        z: -9.8,
+        hp: 75,
+        maxHp: 100,
+        speed: 0.8,
+        damage: 6,
+        radius: 1.0,
+        isFrozen: false,
+        state: 'walking',
+        theme: stage.theme,
+      },
+      {
+        id: 'z_review_fast_l',
+        type: 'fast',
+        x: -1.9,
+        y: 0,
+        z: -8.2,
+        hp: 55,
+        maxHp: 70,
+        speed: 1.1,
+        damage: 5,
+        radius: 0.9,
+        isFrozen: false,
+        state: 'walking',
+        theme: stage.theme,
+      },
+      {
+        id: 'z_review_tank_r',
+        type: 'tank',
+        x: 3.4,
+        y: 0,
+        z: -10.6,
+        hp: 210,
+        maxHp: 280,
+        speed: 0.6,
+        damage: 12,
+        radius: 1.4,
+        isFrozen: false,
+        state: 'walking',
+        theme: stage.theme,
+      },
+      {
+        id: 'z_review_normal_r',
+        type: 'normal',
+        x: 1.8,
+        y: 0,
+        z: -9.0,
+        hp: 80,
+        maxHp: 100,
+        speed: 0.8,
+        damage: 6,
+        radius: 1.0,
+        isFrozen: false,
+        state: 'walking',
+        theme: stage.theme,
+      }
+    );
+
+    this.broadcastCallback({
+      type: 'boss_spawned',
+      zombieId: 'z_review_boss',
+      bossName: stage.bossName,
+      position: { x: 0, y: 0, z: -13.5 },
+    });
+    this.broadcastCallback({
+      type: 'game_tick',
+      world: this.getWorldState(),
+    });
   }
 
   // Evaluate whether normalized screen coordinates (px, py) hit a specific zombie

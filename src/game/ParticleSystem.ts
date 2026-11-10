@@ -14,6 +14,8 @@ interface Particle {
 interface LaserBeam {
   mesh: THREE.Mesh;
   mat: THREE.MeshBasicMaterial;
+  start: THREE.Vector3;
+  end: THREE.Vector3;
   life: number;
   maxLife: number;
 }
@@ -66,7 +68,7 @@ export class ParticleSystem {
     this.scene = scene;
   }
 
-  // Spawn colorful arcade laser tracer from barricade cannon to target point
+  // Spawn short upward shot tracer bolt from bottom foreground turret muzzle to crosshair target (fades in 120ms)
   public spawnLaserTracer(
     fromX: number,
     fromY: number,
@@ -81,14 +83,16 @@ export class ParticleSystem {
     const distance = start.distanceTo(end);
     if (distance < 0.1) return;
 
-    const beamGeom = new THREE.CylinderGeometry(0.035, 0.065, distance, 6, 1, true);
-    beamGeom.translate(0, distance / 2, 0);
+    // Compact tapered tracer bolt (instead of a long beam cutting across the entire screen)
+    const boltLength = Math.min(distance * 0.36, 4.2);
+    const beamGeom = new THREE.CylinderGeometry(0.018, 0.042, boltLength, 6, 1, true);
+    beamGeom.translate(0, boltLength / 2, 0);
     beamGeom.rotateX(Math.PI / 2);
 
     const mat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(colorHex),
       transparent: true,
-      opacity: 0.92,
+      opacity: 0.95,
       depthWrite: false,
     });
 
@@ -97,11 +101,14 @@ export class ParticleSystem {
     mesh.lookAt(end);
     this.scene.add(mesh);
 
+    // 120ms tracer lifetime (within 100-150ms spec)
     this.lasers.push({
       mesh,
       mat,
-      life: 0.16,
-      maxLife: 0.16,
+      start,
+      end,
+      life: 0.12,
+      maxLife: 0.12,
     });
   }
 
@@ -280,8 +287,9 @@ export class ParticleSystem {
     });
 
     const ringMat = new THREE.MeshBasicMaterial({
-      color: p.type === 'weapon_crate' ? 0xff5400 : 0xffffff,
-      wireframe: true,
+      color: p.type === 'weapon_crate' ? 0xffbe0b : color,
+      transparent: true,
+      opacity: 0.65,
     });
 
     const geom = p.type === 'weapon_crate' ? this.weaponCrateGeom : this.powerupBoxGeom;
@@ -325,7 +333,7 @@ export class ParticleSystem {
       }
     }
 
-    // 2. Update laser tracers
+    // 2. Update laser tracers (travel upward from turret muzzle toward crosshair target and fade out in 120ms)
     for (let i = this.lasers.length - 1; i >= 0; i--) {
       const l = this.lasers[i];
       l.life -= dt;
@@ -336,9 +344,14 @@ export class ParticleSystem {
         this.lasers.splice(i, 1);
         continue;
       }
-      const ratio = l.life / l.maxLife;
-      l.mat.opacity = ratio;
-      l.mesh.scale.set(ratio, ratio, 1);
+      const ratio = Math.max(0, l.life / l.maxLife);
+      const progress = 1 - ratio;
+      // Travel from bottom turret muzzle up toward crosshair target
+      l.mesh.position.lerpVectors(l.start, l.end, progress * 0.72);
+      l.mesh.lookAt(l.end);
+      l.mat.opacity = ratio * 0.95;
+      const widthScale = 0.55 + ratio * 0.45;
+      l.mesh.scale.set(widthScale, widthScale, Math.max(0.35, ratio));
     }
 
     // 3. Update shockwave rings

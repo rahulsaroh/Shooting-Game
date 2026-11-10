@@ -77,12 +77,19 @@ export interface StageDefinition {
   name: string;
   subtitle: string;
   theme: ThemeId;
+  propSet: 'downtown' | 'biolab' | 'citadel';
+  propList: string[];
   skyColor: string;
   fogColor: string;
   fogDensity: number;
   ambientColor: string;
   directionalLightColor: string;
   accentLightColor: string;
+  roadColor: string;
+  sidewalkColor: string;
+  ambientParticleColor: string;
+  musicTrackId: string;
+  ambienceTrackId: string;
   flickerIntensity: number;
   bossName: string;
   bossWeakPointOffsetY: number;
@@ -275,6 +282,7 @@ export type ClientMessage =
   | { type: 'update_settings'; settings: Partial<GameSettings> }
   | { type: 'spawn_bots'; count: number }
   | { type: 'remove_bots' }
+  | { type: 'trigger_review_scene'; stageIndex?: number }
   | { type: 'ping'; time: number };
 
 export type ServerMessage =

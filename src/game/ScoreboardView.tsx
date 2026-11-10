@@ -33,9 +33,7 @@ export const ScoreboardView: React.FC<ScoreboardViewProps> = ({ world, onRestart
 
           <h1
             className={`font-display text-6xl font-bold italic tracking-wider ${
-              isVictory
-                ? 'text-emerald-400 drop-shadow-[0_0_35px_rgba(52,211,153,0.5)]'
-                : 'text-rose-500 drop-shadow-[0_0_35px_rgba(244,63,94,0.5)]'
+              isVictory ? 'text-emerald-400' : 'text-rose-500'
             }`}
           >
             {isVictory ? 'ARCADE VICTORY!' : 'GAME OVER'}
@@ -49,10 +47,9 @@ export const ScoreboardView: React.FC<ScoreboardViewProps> = ({ world, onRestart
         {/* MVP Top Scorer Spotlight */}
         {mvp && (
           <div
-            className="p-5 rounded-2xl border-2 bg-slate-900/95 flex flex-wrap items-center justify-between gap-4 shadow-2xl"
+            className="p-5 rounded-2xl border-2 bg-slate-900/95 flex flex-wrap items-center justify-between gap-4 shadow-xl"
             style={{
               borderColor: mvp.color,
-              boxShadow: `0 0 28px ${mvp.color}33`,
             }}
           >
             <div className="flex items-center gap-4">
@@ -201,7 +198,7 @@ export const ScoreboardView: React.FC<ScoreboardViewProps> = ({ world, onRestart
           <button
             type="button"
             onClick={onRestart}
-            className="px-10 py-4 rounded-xl bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-display font-bold text-lg tracking-wider flex items-center gap-2.5 shadow-[0_0_30px_rgba(255,190,11,0.45)] transition transform active:scale-95 cursor-pointer whitespace-nowrap"
+            className="px-10 py-4 rounded-xl bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-display font-bold text-lg tracking-wider flex items-center gap-2.5 shadow-xl transition transform active:scale-95 cursor-pointer whitespace-nowrap"
           >
             <RotateCcw className="w-5 h-5" />
             <span>PLAY AGAIN (FREE PLAY)</span>

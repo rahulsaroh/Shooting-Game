@@ -6,6 +6,28 @@
   --font-mono: "JetBrains Mono", monospace;
 }
 
+/* Crisp 4K UHD & QHD TV Scaling:
+   Tailwind utilities (rem-based) automatically scale up on 2K (2560x1440) and 4K (3840x2160) TV viewports
+   so HUD cards, crosshairs, and typography remain razor-sharp and readable from 3 meters away. */
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+}
+
+@media (min-width: 2400px) {
+  html {
+    font-size: 22px;
+  }
+}
+
+@media (min-width: 3400px) {
+  html {
+    font-size: 30px;
+  }
+}
+
 @keyframes arcadeFloatUp {
   0% {
     opacity: 1;
@@ -13,7 +35,7 @@
   }
   20% {
     opacity: 1;
-    transform: translate(-50%, -14px) scale(1.15);
+    transform: translate(-50%, -14px) scale(1.1);
   }
   100% {
     opacity: 0;
@@ -22,5 +44,5 @@
 }
 
 .animate-arcade-popup {
-  animation: arcadeFloatUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: arcadeFloatUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

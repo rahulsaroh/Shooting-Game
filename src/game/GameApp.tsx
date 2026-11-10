@@ -1,11 +1,20 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ThreeScene } from './ThreeScene.ts';
 import { AudioManager } from './AudioManager.ts';
-import { HudOverlay, ArcadeHitPopup } from './HudOverlay.tsx';
+import { HudOverlay, projectToScreen } from './HudOverlay.tsx';
 import { LobbyView } from './LobbyView.tsx';
 import { SettingsModal } from './SettingsModal.tsx';
 import { ScoreboardView } from './ScoreboardView.tsx';
 import { SimulatorControls } from './SimulatorControls.tsx';
+import {
+  ArcadeHitPopup,
+  DEFAULT_BANNER_DURATION_MS,
+  QueuedBannerNotification,
+  SCORE_POPUP_LIFETIME_MS,
+  TurretToast,
+  dequeueNextFreshBanner,
+  mergeOrCreateScorePopup,
+} from './uiNotificationQueue.ts';
 import {
   GameWorldState,
   ServerMessage,
@@ -15,7 +24,7 @@ import {
   PlayerInfo,
   GamePhase,
 } from '../../shared/types.ts';
-import { DEFAULT_SETTINGS, WEAPONS } from '../../shared/config.ts';
+import { DEFAULT_SETTINGS, WEAPONS, ZOMBIE_VISUAL_SCALE } from '../../shared/config.ts';
 
 export const GameApp: React.FC = () => {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -50,13 +59,25 @@ export const GameApp: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [lastHitPlayerId, setLastHitPlayerId] = useState<string | null>(null);
-  const [hitPopups, setHitPopups] = useState<ArcadeHitPopup[]>([]);
 
-  // Debug Overlays (F3 = Perf & Tick Rate, Key H = Hitboxes, Key K = Audio Preview)
+  // Phase 2: Target-merged score popups (~0.8s fade) & Central Notification Queue (1 banner at a time, >2s stale drop)
+  const [hitPopups, setHitPopups] = useState<ArcadeHitPopup[]>([]);
+  const [activeBanner, setActiveBanner] = useState<QueuedBannerNotification | null>(null);
+  const bannerQueueRef = useRef<QueuedBannerNotification[]>([]);
+  const activeBannerRef = useRef<QueuedBannerNotification | null>(null);
+  const bannerTimerRef = useRef<number | null>(null);
+
+  // Phase 3: Small Weapon-Crate Pickup Toasts near player's turret + F2 Debug Mode (hidden by default)
+  const [turretToasts, setTurretToasts] = useState<TurretToast[]>([]);
+  const [f2DebugMode, setF2DebugMode] = useState(false);
+
+  // Phase 6: Boss Entrance Warning Flash
+  const [bossWarningFlash, setBossWarningFlash] = useState(false);
+
+  // Debug Overlays (F3 = Perf & Tick Rate, Key H = Hitboxes, Key K = Audio Preview, F4 = Screenshot Scene)
   const [f3DebugActive, setF3DebugActive] = useState(false);
   const [measuredFps, setMeasuredFps] = useState(60);
   const [hitboxDebugActive, setHitboxDebugActive] = useState(false);
-  const [debugBanner, setDebugBanner] = useState<string | null>(null);
 
   const hostPlayerIdRef = useRef<string | null>(null);
   const hostJoinSentRef = useRef<boolean>(false);
@@ -71,7 +92,23 @@ export const GameApp: React.FC = () => {
     playersRef.current = worldState.players;
   }, [worldState.settings, worldState.players]);
 
-  // Poll measured FPS once per second when F3 overlay is open
+  // Periodically prune expired 0.8s score popups and expired turret toasts
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const now = Date.now();
+      setHitPopups((prev) =>
+        prev.length === 0
+          ? prev
+          : prev.filter((p) => now - p.updatedAt < SCORE_POPUP_LIFETIME_MS)
+      );
+      setTurretToasts((prev) =>
+        prev.length === 0 ? prev : prev.filter((t) => now < t.expiresAt)
+      );
+    }, 150);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  // Poll measured FPS when F3 overlay is open
   useEffect(() => {
     if (!f3DebugActive) return;
     const interval = window.setInterval(() => {
@@ -82,29 +119,103 @@ export const GameApp: React.FC = () => {
     return () => window.clearInterval(interval);
   }, [f3DebugActive]);
 
-  const showTransientDebugBanner = useCallback((text: string) => {
-    setDebugBanner(text);
-    setTimeout(() => {
-      setDebugBanner((curr) => (curr === text ? null : curr));
-    }, 2800);
+  // Phase 2: Central Notification Queue processor (1 active banner at a time; drops items >2s old)
+  const advanceBannerQueue = useCallback(() => {
+    const now = Date.now();
+    const { next, remaining } = dequeueNextFreshBanner(bannerQueueRef.current, now);
+    bannerQueueRef.current = remaining;
+    activeBannerRef.current = next;
+    setActiveBanner(next);
+
+    if (bannerTimerRef.current) {
+      window.clearTimeout(bannerTimerRef.current);
+      bannerTimerRef.current = null;
+    }
+
+    if (next) {
+      bannerTimerRef.current = window.setTimeout(() => {
+        advanceBannerQueue();
+      }, next.durationMs);
+    }
   }, []);
 
-  const spawnHudPopup = useCallback(
-    (x: number, y: number, text: string, color: string, headshot = false, subtext?: string) => {
-      const popupId = `pop_${Date.now()}_${Math.random()}`;
-      const newPopup: ArcadeHitPopup = {
-        id: popupId,
-        x,
-        y: Math.max(0.08, y),
+  const enqueueBanner = useCallback(
+    (
+      text: string,
+      tone: 'amber' | 'cyan' | 'emerald' | 'rose' | 'fuchsia' = 'amber',
+      durationMs = DEFAULT_BANNER_DURATION_MS
+    ) => {
+      const now = Date.now();
+      const item: QueuedBannerNotification = {
+        id: `bn_${now}_${Math.random()}`,
         text,
-        subtext,
-        color,
-        headshot,
+        tone,
+        enqueuedAt: now,
+        durationMs,
       };
-      setHitPopups((prev) => [...prev.slice(-9), newPopup]);
-      setTimeout(() => {
-        setHitPopups((prev) => prev.filter((p) => p.id !== popupId));
-      }, 950);
+
+      if (!activeBannerRef.current) {
+        activeBannerRef.current = item;
+        setActiveBanner(item);
+        if (bannerTimerRef.current) window.clearTimeout(bannerTimerRef.current);
+        bannerTimerRef.current = window.setTimeout(() => {
+          advanceBannerQueue();
+        }, durationMs);
+      } else {
+        // Avoid queuing duplicate identical text
+        if (
+          activeBannerRef.current.text !== text &&
+          !bannerQueueRef.current.some((q) => q.text === text)
+        ) {
+          bannerQueueRef.current.push(item);
+        }
+      }
+    },
+    [advanceBannerQueue]
+  );
+
+  // Phase 2: Target-merged score popup spawner (fades in ~0.8s, merges rapid hits on same target)
+  const spawnTargetPopup = useCallback(
+    (
+      targetKey: string,
+      x: number,
+      y: number,
+      points: number,
+      label: 'HIT!' | 'HEADSHOT!' | 'WEAK POINT!' | 'CO-OP!' | 'PENALTY!',
+      color: string,
+      headshot = false
+    ) => {
+      setHitPopups((prev) =>
+        mergeOrCreateScorePopup(prev, {
+          targetKey,
+          x,
+          y,
+          points,
+          label,
+          color,
+          headshot,
+        })
+      );
+    },
+    []
+  );
+
+  // Phase 3: Small Weapon-Crate Toast near a player's bottom turret
+  const spawnTurretToast = useCallback(
+    (playerId: string, slot: number, text: string, color: string) => {
+      const now = Date.now();
+      const toast: TurretToast = {
+        id: `tt_${playerId}_${now}`,
+        playerId,
+        slot,
+        text,
+        color,
+        expiresAt: now + 2200,
+      };
+      setTurretToasts((prev) => [
+        ...prev.filter((t) => t.playerId !== playerId && t.slot !== slot),
+        toast,
+      ]);
     },
     []
   );
@@ -130,7 +241,8 @@ export const GameApp: React.FC = () => {
       msg.type === 'restart_game' ||
       msg.type === 'update_settings' ||
       msg.type === 'spawn_bots' ||
-      msg.type === 'remove_bots'
+      msg.type === 'remove_bots' ||
+      msg.type === 'trigger_review_scene'
     ) {
       fetch('/api/action', {
         method: 'POST',
@@ -272,15 +384,20 @@ export const GameApp: React.FC = () => {
           }
         } else if (msg.type === 'highscores_updated') {
           setWorldState((prev) => ({ ...prev, highScores: msg.highScores }));
-          showTransientDebugBanner('🏆 NEW HIGH SCORE RECORDED TO SERVER LEADERBOARD!');
+          enqueueBanner('🏆 NEW HIGH SCORE RECORDED!', 'amber');
         } else if (msg.type === 'boss_spawned') {
-          threeSceneRef.current?.triggerCameraShake(0.72);
+          // Phase 6: Boss entrance warning flash, short camera shake & queued Boss name banner
+          setBossWarningFlash(true);
+          window.setTimeout(() => setBossWarningFlash(false), 1400);
+          threeSceneRef.current?.triggerCameraShake(0.68);
           audioRef.current?.playBossEntranceRoar(msg.position);
-          setTimeout(() => {
+          window.setTimeout(() => {
             audioRef.current?.playAnnouncer('boss_incoming');
           }, 450);
-          showTransientDebugBanner(
-            `⚠️ BOSS ARRIVAL: ${msg.bossName || 'NECRO OVERLORD'} — AIM FOR WEAK POINT!`
+          enqueueBanner(
+            `⚠️ BOSS INCOMING: ${msg.bossName || 'NECRO OVERLORD'}`,
+            'fuchsia',
+            1800
           );
         } else if (msg.type === 'hit_event') {
           setLastHitPlayerId(msg.playerId);
@@ -310,11 +427,16 @@ export const GameApp: React.FC = () => {
               ? Math.max(0.24, weaponDef.shakeIntensity)
               : weaponDef.shakeIntensity * 0.65
           );
-          if (msg.weakPointHit || msg.headshot || msg.killed || weaponDef.id === 'grenade_launcher') {
+          if (
+            msg.weakPointHit ||
+            msg.headshot ||
+            msg.killed ||
+            weaponDef.id === 'grenade_launcher'
+          ) {
             threeSceneRef.current?.triggerHitStop(msg.isBossKill ? 90 : 42);
           }
 
-          // Fire 3D Laser Tracer Beam from barricade cannon to zombie
+          // Phase 1: Fire upward 120ms tracer from player's bottom turret muzzle to target
           threeSceneRef.current?.firePlayerLaser(
             shooterSlot,
             aimX,
@@ -326,23 +448,32 @@ export const GameApp: React.FC = () => {
           // Trigger zombie hit flash & recoil stagger
           threeSceneRef.current?.zombieManager.triggerHitFlash(msg.zombieId);
 
-          // Floating Arcade Score + Combo/Headshot/WeakPoint Callout Popup
+          // Phase 2: Target-merged score popup shown near the target (~0.8s fade)
           const pts = msg.scoreAwarded || (msg.headshot ? 50 : 20);
-          const multTag = msg.multiplier && msg.multiplier > 1 ? ` (${msg.multiplier}X)` : '';
-          const titleText = msg.weakPointHit
-            ? `+${pts} WEAK POINT!${multTag}`
+          const targetScreen = projectToScreen(
+            msg.position.x,
+            (msg.position.y || 0) + 1.45 * ZOMBIE_VISUAL_SCALE,
+            msg.position.z
+          );
+          const label = msg.weakPointHit
+            ? 'WEAK POINT!'
             : msg.headshot
-            ? `+${pts} HEADSHOT!${multTag}`
-            : `+${pts} HIT!${multTag}`;
-          const subText = msg.isBossKill
-            ? '🔥 BOSS DEFEATED! 🔥'
-            : msg.killed
-            ? 'ZOMBIE ELIMINATED!'
-            : msg.combo && msg.combo >= 3
-            ? `${msg.combo} HIT STREAK!`
-            : undefined;
+            ? 'HEADSHOT!'
+            : 'HIT!';
 
-          spawnHudPopup(aimX, aimY - 0.04, titleText, shooterColor, msg.headshot, subText);
+          spawnTargetPopup(
+            msg.zombieId,
+            targetScreen.x,
+            targetScreen.y - 0.04,
+            pts,
+            label,
+            shooterColor,
+            Boolean(msg.headshot || msg.weakPointHit)
+          );
+
+          if (msg.isBossKill) {
+            enqueueBanner('⚡ BOSS ELIMINATED · SLOW-MOTION FINISH! ⚡', 'fuchsia', 1900);
+          }
 
           // Impact 3D particles & shockwave ring (or Explosion for Grenade Launcher / Weak Point)
           const currentSettings = settingsRef.current;
@@ -373,41 +504,49 @@ export const GameApp: React.FC = () => {
           }
         } else if (msg.type === 'coop_combo') {
           audioRef.current?.playPowerup();
-          spawnHudPopup(
-            0.5,
-            0.34,
-            `+${msg.bonusScore} CO-OP CROSSFIRE BONUS!`,
+          const pos = projectToScreen(msg.position.x, msg.position.y + 2.2, msg.position.z);
+          spawnTargetPopup(
+            `coop_${msg.playerIds.join('_')}`,
+            pos.x,
+            pos.y,
+            msg.bonusScore,
+            'CO-OP!',
             '#ffbe0b',
-            true,
-            msg.playerNames.join(' + ')
+            true
           );
         } else if (msg.type === 'civilian_hit') {
           audioRef.current?.playBarricadeHit();
           threeSceneRef.current?.triggerCameraShake(0.45);
-          spawnHudPopup(
-            0.5,
-            0.4,
-            `-${msg.penalty} DON'T SHOOT CIVILIANS!`,
+          const pos = projectToScreen(msg.position.x, msg.position.y + 2.0, msg.position.z);
+          spawnTargetPopup(
+            `civ_${msg.playerId}`,
+            pos.x,
+            pos.y,
+            -msg.penalty,
+            'PENALTY!',
             '#f43f5e',
-            false,
-            `${msg.playerName} COMBO RESET!`
+            false
           );
         } else if (msg.type === 'player_downed') {
           audioRef.current?.playBarricadeHit();
-          showTransientDebugBanner(
-            `🚨 ${msg.playerName} IS DOWN! SHOOT THEIR BEACON WITHIN 10s TO REVIVE!`
-          );
+          enqueueBanner(`🚨 ${msg.playerName} DOWN · SHOOT BEACON TO REVIVE!`, 'rose', 1600);
         } else if (msg.type === 'player_revived') {
           audioRef.current?.playPowerup();
-          showTransientDebugBanner(`💚 ${msg.reviverName} REVIVED ${msg.playerName}! (+200 PTS)`);
+          enqueueBanner(`💚 ${msg.reviverName} REVIVED ${msg.playerName}!`, 'emerald', 1500);
         } else if (msg.type === 'barricade_damaged') {
           threeSceneRef.current?.triggerBarricadeHit();
           audioRef.current?.playBarricadeHit();
         } else if (msg.type === 'powerup_collected') {
           audioRef.current?.playPowerup();
+          // Phase 3: Weapon-crate pickup becomes a small toast near that player's turret, not a top banner!
           if (msg.weaponGranted && WEAPONS[msg.weaponGranted]) {
-            showTransientDebugBanner(
-              `🔫 WEAPON CRATE EQUIPPED: ${WEAPONS[msg.weaponGranted].name}!`
+            const wDef = WEAPONS[msg.weaponGranted];
+            const collector = playersRef.current.find((p) => p.id === msg.playerId);
+            spawnTurretToast(
+              msg.playerId,
+              collector?.slot || 1,
+              `🔫 ${wDef.shortName} EQUIPPED`,
+              wDef.color
             );
           }
         }
@@ -425,7 +564,7 @@ export const GameApp: React.FC = () => {
     };
 
     wsRef.current = ws;
-  }, [showTransientDebugBanner, spawnHudPopup]);
+  }, [enqueueBanner, spawnTargetPopup, spawnTurretToast]);
 
   useEffect(() => {
     connectWebSocket();
@@ -436,9 +575,8 @@ export const GameApp: React.FC = () => {
     const ok = await audioRef.current?.unlockAudio();
     if (ok) {
       setAudioUnlocked(true);
-      showTransientDebugBanner('🔊 3D HORROR SOUNDSCAPE & HRTF AUDIO UNLOCKED');
     }
-  }, [showTransientDebugBanner]);
+  }, []);
 
   // Game Control Actions
   const handleStartGame = useCallback(() => {
@@ -495,13 +633,28 @@ export const GameApp: React.FC = () => {
   const handleToggleMute = useCallback(() => {
     const muted = audioRef.current?.toggleMute() ?? false;
     setIsMuted(muted);
-    showTransientDebugBanner(
-      muted ? '🔇 MASTER AUDIO MUTED [Key M]' : '🔊 MASTER AUDIO UNMUTED [Key M]'
+    enqueueBanner(
+      muted ? '🔇 MASTER AUDIO MUTED [Key M]' : '🔊 MASTER AUDIO UNMUTED [Key M]',
+      'cyan',
+      1200
     );
-  }, [showTransientDebugBanner]);
+  }, [enqueueBanner]);
+
+  // Phase 7: Deterministic Screenshot / Visual Review Scene (Key F4)
+  const handleTriggerReviewScene = useCallback(() => {
+    sendMessage({ type: 'trigger_review_scene', stageIndex: 1 });
+    // Also populate deterministic sample UI elements (merged score popup + turret weapon toast)
+    window.setTimeout(() => {
+      spawnTargetPopup('z_review_boss', 0.5, 0.36, 110, 'WEAK POINT!', '#f72585', true);
+      spawnTargetPopup('z_review_boss', 0.5, 0.36, 110, 'WEAK POINT!', '#f72585', true);
+      spawnTurretToast('review_slot_2', 2, '🔫 SHOTGUN EQUIPPED', '#ff5400');
+    }, 120);
+  }, [sendMessage, spawnTargetPopup, spawnTurretToast]);
 
   // Keyboard shortcut listener:
+  // - F2: Toggle Debug Mode (TV/Phone switch, Auto-fire/Auto-reload/Unlimited toggles, Arcade Test Deck)
   // - F3: Toggle Performance & Server Tick Rate Debug Overlay
+  // - F4: Trigger Deterministic Screenshot Review Scene (Stage 2 Bio-Lab Reactor + 4 Bots + Boss + Popups)
   // - Key H: Toggle 3D Hitbox Wireframes (Head Sphere + Body Capsule)
   // - Key K: Cycle & Preview Sound Categories on TV
   // - Key M: Toggle Mute All Audio
@@ -512,26 +665,34 @@ export const GameApp: React.FC = () => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
-      if (e.code === 'F3' || e.key === 'F3') {
+      if (e.code === 'F2' || e.key === 'F2') {
+        e.preventDefault();
+        setF2DebugMode((prev) => !prev);
+      } else if (e.code === 'F3' || e.key === 'F3') {
         e.preventDefault();
         setF3DebugActive((prev) => !prev);
         if (threeSceneRef.current) {
           setMeasuredFps(threeSceneRef.current.getMeasuredFps());
         }
+      } else if (e.code === 'F4' || e.key === 'F4') {
+        e.preventDefault();
+        handleTriggerReviewScene();
       } else if (e.code === 'KeyH') {
         const visible = threeSceneRef.current?.toggleHitboxDebug() ?? false;
         setHitboxDebugActive(visible);
         const fps = threeSceneRef.current?.getMeasuredFps() ?? 60;
-        showTransientDebugBanner(
+        enqueueBanner(
           visible
-            ? `🟡 3D HITBOX DEBUG ON (Head Sphere + Body Capsule) · ${fps} FPS`
-            : '⚪ 3D HITBOX DEBUG OFF'
+            ? `🟡 3D HITBOX DEBUG ON (Head + Capsule) · ${fps} FPS`
+            : '⚪ 3D HITBOX DEBUG OFF',
+          'amber',
+          1400
         );
       } else if (e.code === 'KeyK') {
         setAudioUnlocked(true);
         const res = audioRef.current?.triggerDebugSoundPreview();
         if (res) {
-          showTransientDebugBanner(`🎵 AUDIO PREVIEW [${res.category}]: ${res.description}`);
+          enqueueBanner(`🎵 AUDIO PREVIEW [${res.category}]: ${res.description}`, 'cyan', 1500);
         }
       } else if (e.code === 'KeyM') {
         handleToggleMute();
@@ -556,7 +717,8 @@ export const GameApp: React.FC = () => {
     handleSkipTutorial,
     handleRestartGame,
     handleToggleMute,
-    showTransientDebugBanner,
+    handleTriggerReviewScene,
+    enqueueBanner,
   ]);
 
   // Audio Controls
@@ -666,19 +828,12 @@ export const GameApp: React.FC = () => {
         </div>
       )}
 
-      {/* On-Screen Toast Banner for Hitbox Debug (Key H), Audio Preview (Key K), Mute (Key M), or Boss Roar */}
-      {(debugBanner || hitboxDebugActive) && (
-        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center gap-1.5">
-          {debugBanner && (
-            <div className="px-4 py-2 rounded-xl bg-slate-950/85 backdrop-blur-md border border-cyan-400/70 text-xs font-mono font-bold text-cyan-200 shadow-lg">
-              {debugBanner}
-            </div>
-          )}
-          {hitboxDebugActive && (
-            <div className="px-3 py-1 rounded-lg bg-amber-500/25 backdrop-blur-md border border-amber-400/70 text-[11px] font-mono font-bold text-amber-200">
-              [Key H] HITBOX OVERLAY ACTIVE: Yellow = Head Sphere · Cyan = Body Capsule
-            </div>
-          )}
+      {/* Hitbox Debug Status Badge (Key H) */}
+      {hitboxDebugActive && (
+        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
+          <div className="px-3 py-1 rounded-lg bg-amber-500/25 backdrop-blur-md border border-amber-400/70 text-[11px] font-mono font-bold text-amber-200 whitespace-nowrap">
+            [Key H] HITBOX OVERLAY ACTIVE: Yellow = Head Sphere · Cyan = Body Capsule
+          </div>
         </div>
       )}
 
@@ -738,8 +893,13 @@ export const GameApp: React.FC = () => {
           world={worldState}
           soundEnabled={soundEnabled && !isMuted}
           musicEnabled={musicEnabled && !isMuted}
+          f2DebugMode={f2DebugMode}
+          bossWarningFlash={bossWarningFlash}
+          activeBanner={activeBanner}
+          turretToasts={turretToasts}
           onToggleSound={toggleSound}
           onToggleMusic={toggleMusic}
+          onOpenSettings={() => setSettingsOpen(true)}
           onReturnLobby={handleRestartGame}
           onSkipTutorial={handleSkipTutorial}
           onUpdateSettings={handleUpdateSettings}
@@ -763,15 +923,17 @@ export const GameApp: React.FC = () => {
         onSave={handleUpdateSettings}
       />
 
-      {/* Simulator Hub for Testing without Phones */}
-      <SimulatorControls
-        phase={worldState.phase}
-        onSpawnBots={handleSpawnBots}
-        onRemoveBots={handleRemoveBots}
-        onMouseAim={handleMouseAim}
-        onMouseShoot={handleMouseShoot}
-        onMouseReload={handleMouseReload}
-      />
+      {/* Phase 3: Arcade Test Deck (SimulatorControls) is hidden by default and only shown when Debug Mode [F2] is active */}
+      {f2DebugMode && (
+        <SimulatorControls
+          phase={worldState.phase}
+          onSpawnBots={handleSpawnBots}
+          onRemoveBots={handleRemoveBots}
+          onMouseAim={handleMouseAim}
+          onMouseShoot={handleMouseShoot}
+          onMouseReload={handleMouseReload}
+        />
+      )}
     </div>
   );
 };
