@@ -1,0 +1,232 @@
+{
+  "themes": {
+    "classic": {
+      "name": "Neon Arcade Undead",
+      "description": "Vibrant Timezone arcade zombies in varsity jackets, neon mohawks, and glowing eyes.",
+      "voiceSet": "classic",
+      "tint": "#ffffff",
+      "palette": {
+        "skin": "#52b788",
+        "clothes": "#e63946",
+        "accent": "#ffb703",
+        "pants": "#1d3557",
+        "eyes": "#ffea00",
+        "gore": "#ff2a85"
+      },
+      "types": {
+        "normal": {
+          "name": "Arcade Walker",
+          "hp": 50,
+          "speed": 1.1,
+          "scale": 1.0,
+          "model": "/models/classic/zombie_normal.glb",
+          "tint": "#e63946",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        },
+        "fast": {
+          "name": "Turbo Runner",
+          "hp": 30,
+          "speed": 2.2,
+          "scale": 0.85,
+          "model": "/models/classic/zombie_fast.glb",
+          "tint": "#ffbe0b",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        },
+        "tank": {
+          "name": "Bio-Brute",
+          "hp": 160,
+          "speed": 0.65,
+          "scale": 1.5,
+          "model": "/models/classic/zombie_tank.glb",
+          "tint": "#7209b7",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        },
+        "boss": {
+          "name": "Necro Overlord",
+          "hp": 600,
+          "speed": 0.85,
+          "scale": 2.2,
+          "model": "/models/classic/zombie_boss.glb",
+          "tint": "#d90429",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        }
+      }
+    },
+    "cartoon": {
+      "name": "Slime Blaster Squad",
+      "description": "Colorful family-fun jelly monsters with giant googly eyes and neon slime & confetti splashes.",
+      "voiceSet": "cartoon",
+      "tint": "#b5e48c",
+      "palette": {
+        "skin": "#80ed99",
+        "clothes": "#7209b7",
+        "accent": "#f72585",
+        "pants": "#3a0ca3",
+        "eyes": "#ffffff",
+        "gore": "#b5e48c"
+      },
+      "types": {
+        "normal": {
+          "name": "Slime Bouncer",
+          "hp": 40,
+          "speed": 0.95,
+          "scale": 0.95,
+          "model": "/models/cartoon/zombie_normal.glb",
+          "tint": "#80ed99",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        },
+        "fast": {
+          "name": "Hyper Bloop",
+          "hp": 25,
+          "speed": 1.9,
+          "scale": 0.8,
+          "model": "/models/cartoon/zombie_fast.glb",
+          "tint": "#f72585",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        },
+        "tank": {
+          "name": "Giga Jelly",
+          "hp": 130,
+          "speed": 0.55,
+          "scale": 1.4,
+          "model": "/models/cartoon/zombie_tank.glb",
+          "tint": "#7209b7",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        },
+        "boss": {
+          "name": "King Gloop",
+          "hp": 480,
+          "speed": 0.75,
+          "scale": 2.0,
+          "model": "/models/cartoon/zombie_boss.glb",
+          "tint": "#ffbe0b",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        }
+      }
+    },
+    "robot": {
+      "name": "Cyber-Bot Uprising",
+      "description": "Chrome and neon arcade defense mechs with glowing plasma visors and spark bursts.",
+      "voiceSet": "robot",
+      "tint": "#00b4d8",
+      "palette": {
+        "skin": "#adb5bd",
+        "clothes": "#00b4d8",
+        "accent": "#ff9e00",
+        "pants": "#2b2d42",
+        "eyes": "#ff0055",
+        "gore": "#00f5d4"
+      },
+      "types": {
+        "normal": {
+          "name": "Striker Unit",
+          "hp": 55,
+          "speed": 1.15,
+          "scale": 1.0,
+          "model": "/models/robot/zombie_normal.glb",
+          "tint": "#00b4d8",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        },
+        "fast": {
+          "name": "Volt Sprinter",
+          "hp": 35,
+          "speed": 2.4,
+          "scale": 0.8,
+          "model": "/models/robot/zombie_fast.glb",
+          "tint": "#ff9e00",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        },
+        "tank": {
+          "name": "Goliath Mech",
+          "hp": 180,
+          "speed": 0.6,
+          "scale": 1.6,
+          "model": "/models/robot/zombie_tank.glb",
+          "tint": "#4361ee",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        },
+        "boss": {
+          "name": "Omega Titan",
+          "hp": 650,
+          "speed": 0.8,
+          "scale": 2.3,
+          "model": "/models/robot/zombie_boss.glb",
+          "tint": "#ff0055",
+          "animations": {
+            "walk": "Walk",
+            "attack": "Attack",
+            "death": "Death",
+            "hit": "Hit",
+            "idle": "Idle"
+          }
+        }
+      }
+    }
+  }
+}

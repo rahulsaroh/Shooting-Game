@@ -1,0 +1,6 @@
+{
+  "name": "DeadAim: Motion Zombie Shooter",
+  "description": "Local multiplayer 3D zombie shooting gallery where PC/TV displays the battlefield and smartphones act as motion-aim gun controllers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
