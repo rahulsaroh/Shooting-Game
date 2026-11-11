@@ -1,0 +1,522 @@
+{
+  "version": "2.0.0",
+  "description": "DeadAim Horror & Arcade Soundscape Manifest. Swap or add files in /public/audio/<category>/ without changing code.",
+  "categories": {
+    "weapons": {
+      "shot": {
+        "files": [
+          "/audio/weapons/shot_01.wav",
+          "/audio/weapons/shot_02.wav",
+          "/audio/weapons/shot_03.wav"
+        ],
+        "volume": 0.85,
+        "pitchRange": [0.95, 1.06],
+        "category": "sfx"
+      },
+      "shot_kids": {
+        "files": [
+          "/audio/weapons/laser_pew_01.wav",
+          "/audio/weapons/laser_pew_02.wav",
+          "/audio/weapons/laser_pew_03.wav"
+        ],
+        "volume": 0.78,
+        "pitchRange": [0.94, 1.08],
+        "category": "sfx"
+      },
+      "empty_click": {
+        "files": [
+          "/audio/weapons/empty_click_01.wav",
+          "/audio/weapons/empty_click_02.wav"
+        ],
+        "volume": 0.75,
+        "pitchRange": [0.96, 1.04],
+        "category": "sfx"
+      },
+      "reload": {
+        "files": [
+          "/audio/weapons/reload_01.wav",
+          "/audio/weapons/reload_02.wav"
+        ],
+        "volume": 0.82,
+        "pitchRange": [0.97, 1.03],
+        "category": "sfx"
+      },
+      "headshot": {
+        "files": [
+          "/audio/weapons/headshot_ding_01.wav",
+          "/audio/weapons/headshot_crunch_02.wav",
+          "/audio/weapons/headshot_ding_03.wav"
+        ],
+        "volume": 0.9,
+        "pitchRange": [0.96, 1.06],
+        "category": "sfx"
+      },
+      "body_hit": {
+        "files": [
+          "/audio/weapons/body_hit_01.wav",
+          "/audio/weapons/body_hit_02.wav",
+          "/audio/weapons/body_hit_03.wav"
+        ],
+        "volume": 0.78,
+        "pitchRange": [0.92, 1.08],
+        "category": "sfx"
+      },
+      "body_hit_kids": {
+        "files": [
+          "/audio/weapons/boing_hit_01.wav",
+          "/audio/weapons/boing_hit_02.wav",
+          "/audio/weapons/boing_hit_03.wav"
+        ],
+        "volume": 0.78,
+        "pitchRange": [0.92, 1.12],
+        "category": "sfx"
+      },
+      "barricade_hit": {
+        "files": [
+          "/audio/weapons/barricade_impact_01.wav",
+          "/audio/weapons/barricade_impact_02.wav"
+        ],
+        "volume": 0.88,
+        "pitchRange": [0.92, 1.05],
+        "category": "sfx"
+      },
+      "powerup": {
+        "files": [
+          "/audio/weapons/powerup_chime_01.wav"
+        ],
+        "volume": 0.82,
+        "pitchRange": [0.98, 1.02],
+        "category": "sfx"
+      }
+    },
+    "zombies": {
+      "normal": {
+        "idle": {
+          "files": [
+            "/audio/zombies/normal_idle_01.wav",
+            "/audio/zombies/normal_idle_02.wav",
+            "/audio/zombies/normal_idle_03.wav",
+            "/audio/zombies/normal_idle_04.wav"
+          ],
+          "volume": 0.65,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "aggro": {
+          "files": [
+            "/audio/zombies/normal_aggro_01.wav",
+            "/audio/zombies/normal_aggro_02.wav",
+            "/audio/zombies/normal_aggro_03.wav"
+          ],
+          "volume": 0.74,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "attack": {
+          "files": [
+            "/audio/zombies/normal_attack_01.wav",
+            "/audio/zombies/normal_attack_02.wav",
+            "/audio/zombies/normal_attack_03.wav",
+            "/audio/zombies/normal_attack_04.wav"
+          ],
+          "volume": 0.82,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "hit": {
+          "files": [
+            "/audio/zombies/normal_hit_01.wav",
+            "/audio/zombies/normal_hit_02.wav",
+            "/audio/zombies/normal_hit_03.wav"
+          ],
+          "volume": 0.72,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "death": {
+          "files": [
+            "/audio/zombies/normal_death_01.wav",
+            "/audio/zombies/normal_death_02.wav",
+            "/audio/zombies/normal_death_03.wav",
+            "/audio/zombies/normal_death_04.wav"
+          ],
+          "volume": 0.8,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        }
+      },
+      "fast": {
+        "idle": {
+          "files": [
+            "/audio/zombies/fast_idle_01.wav",
+            "/audio/zombies/fast_idle_02.wav",
+            "/audio/zombies/fast_idle_03.wav"
+          ],
+          "volume": 0.65,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "aggro": {
+          "files": [
+            "/audio/zombies/fast_aggro_01.wav",
+            "/audio/zombies/fast_aggro_02.wav",
+            "/audio/zombies/fast_aggro_03.wav"
+          ],
+          "volume": 0.75,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "attack": {
+          "files": [
+            "/audio/zombies/fast_attack_01.wav",
+            "/audio/zombies/fast_attack_02.wav",
+            "/audio/zombies/fast_attack_03.wav"
+          ],
+          "volume": 0.82,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "hit": {
+          "files": [
+            "/audio/zombies/fast_hit_01.wav",
+            "/audio/zombies/fast_hit_02.wav",
+            "/audio/zombies/fast_hit_03.wav"
+          ],
+          "volume": 0.72,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "death": {
+          "files": [
+            "/audio/zombies/fast_death_01.wav",
+            "/audio/zombies/fast_death_02.wav",
+            "/audio/zombies/fast_death_03.wav"
+          ],
+          "volume": 0.8,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        }
+      },
+      "tank": {
+        "idle": {
+          "files": [
+            "/audio/zombies/tank_idle_01.wav",
+            "/audio/zombies/tank_idle_02.wav",
+            "/audio/zombies/tank_idle_03.wav"
+          ],
+          "volume": 0.78,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "aggro": {
+          "files": [
+            "/audio/zombies/tank_aggro_01.wav",
+            "/audio/zombies/tank_aggro_02.wav",
+            "/audio/zombies/tank_aggro_03.wav"
+          ],
+          "volume": 0.85,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "attack": {
+          "files": [
+            "/audio/zombies/tank_attack_01.wav",
+            "/audio/zombies/tank_attack_02.wav",
+            "/audio/zombies/tank_attack_03.wav"
+          ],
+          "volume": 0.9,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "hit": {
+          "files": [
+            "/audio/zombies/tank_hit_01.wav",
+            "/audio/zombies/tank_hit_02.wav",
+            "/audio/zombies/tank_hit_03.wav"
+          ],
+          "volume": 0.8,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "death": {
+          "files": [
+            "/audio/zombies/tank_death_01.wav",
+            "/audio/zombies/tank_death_02.wav",
+            "/audio/zombies/tank_death_03.wav"
+          ],
+          "volume": 0.88,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        }
+      },
+      "boss": {
+        "idle": {
+          "files": [
+            "/audio/zombies/boss_idle_01.wav",
+            "/audio/zombies/boss_idle_02.wav",
+            "/audio/zombies/boss_idle_03.wav"
+          ],
+          "volume": 0.9,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "aggro": {
+          "files": [
+            "/audio/zombies/boss_aggro_01.wav",
+            "/audio/zombies/boss_aggro_02.wav",
+            "/audio/zombies/boss_aggro_03.wav"
+          ],
+          "volume": 0.95,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "attack": {
+          "files": [
+            "/audio/zombies/boss_attack_01.wav",
+            "/audio/zombies/boss_attack_02.wav",
+            "/audio/zombies/boss_attack_03.wav"
+          ],
+          "volume": 0.98,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "hit": {
+          "files": [
+            "/audio/zombies/boss_hit_01.wav",
+            "/audio/zombies/boss_hit_02.wav",
+            "/audio/zombies/boss_hit_03.wav"
+          ],
+          "volume": 0.88,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "death": {
+          "files": [
+            "/audio/zombies/boss_death_01.wav",
+            "/audio/zombies/boss_death_02.wav",
+            "/audio/zombies/boss_death_03.wav"
+          ],
+          "volume": 1.0,
+          "pitchRange": [0.9, 1.1],
+          "category": "voice"
+        },
+        "entrance_roar": {
+          "files": [
+            "/audio/zombies/boss_entrance_roar_01.wav"
+          ],
+          "volume": 1.0,
+          "pitchRange": [0.95, 1.05],
+          "category": "voice"
+        }
+      },
+      "kids": {
+        "idle": {
+          "files": [
+            "/audio/zombies/kids_goofy_groan_01.wav",
+            "/audio/zombies/kids_goofy_groan_02.wav",
+            "/audio/zombies/kids_goofy_groan_03.wav"
+          ],
+          "volume": 0.65,
+          "pitchRange": [0.92, 1.12],
+          "category": "voice"
+        },
+        "aggro": {
+          "files": [
+            "/audio/zombies/kids_squeak_01.wav",
+            "/audio/zombies/kids_squeak_02.wav",
+            "/audio/zombies/kids_squeak_03.wav"
+          ],
+          "volume": 0.7,
+          "pitchRange": [0.92, 1.12],
+          "category": "voice"
+        },
+        "attack": {
+          "files": [
+            "/audio/zombies/kids_chomp_01.wav",
+            "/audio/zombies/kids_chomp_02.wav",
+            "/audio/zombies/kids_chomp_03.wav"
+          ],
+          "volume": 0.75,
+          "pitchRange": [0.92, 1.12],
+          "category": "voice"
+        },
+        "hit": {
+          "files": [
+            "/audio/zombies/kids_boing_01.wav",
+            "/audio/zombies/kids_boing_02.wav",
+            "/audio/zombies/kids_boing_03.wav"
+          ],
+          "volume": 0.75,
+          "pitchRange": [0.92, 1.12],
+          "category": "voice"
+        },
+        "death": {
+          "files": [
+            "/audio/zombies/kids_pop_01.wav",
+            "/audio/zombies/kids_pop_02.wav",
+            "/audio/zombies/kids_pop_03.wav"
+          ],
+          "volume": 0.78,
+          "pitchRange": [0.92, 1.12],
+          "category": "voice"
+        }
+      }
+    },
+    "ambience": {
+      "horror_bed": {
+        "files": [
+          "/audio/ambience/horror_wind_moans_loop.wav"
+        ],
+        "volume": 0.38,
+        "pitchRange": [1.0, 1.0],
+        "loop": true,
+        "category": "music"
+      },
+      "kids_bed": {
+        "files": [
+          "/audio/ambience/kids_arcade_breeze_loop.wav"
+        ],
+        "volume": 0.28,
+        "pitchRange": [1.0, 1.0],
+        "loop": true,
+        "category": "music"
+      }
+    },
+    "music": {
+      "calm": {
+        "files": [
+          "/audio/music/layer_calm_loop.wav"
+        ],
+        "volume": 0.45,
+        "pitchRange": [1.0, 1.0],
+        "loop": true,
+        "category": "music"
+      },
+      "tense": {
+        "files": [
+          "/audio/music/layer_tense_loop.wav"
+        ],
+        "volume": 0.52,
+        "pitchRange": [1.0, 1.0],
+        "loop": true,
+        "category": "music"
+      },
+      "intense": {
+        "files": [
+          "/audio/music/layer_intense_loop.wav"
+        ],
+        "volume": 0.62,
+        "pitchRange": [1.0, 1.0],
+        "loop": true,
+        "category": "music"
+      },
+      "heartbeat": {
+        "files": [
+          "/audio/music/heartbeat_low_hp_loop.wav"
+        ],
+        "volume": 0.75,
+        "pitchRange": [1.0, 1.0],
+        "loop": true,
+        "category": "music"
+      },
+      "kids_loop": {
+        "files": [
+          "/audio/music/kids_upbeat_loop.wav"
+        ],
+        "volume": 0.45,
+        "pitchRange": [1.0, 1.0],
+        "loop": true,
+        "category": "music"
+      }
+    },
+    "stingers": {
+      "wave_start": {
+        "files": [
+          "/audio/stingers/stinger_wave_start.wav"
+        ],
+        "volume": 0.85,
+        "pitchRange": [1.0, 1.0],
+        "category": "music"
+      },
+      "wave_cleared": {
+        "files": [
+          "/audio/stingers/stinger_wave_cleared.wav"
+        ],
+        "volume": 0.85,
+        "pitchRange": [1.0, 1.0],
+        "category": "music"
+      },
+      "boss_arrival": {
+        "files": [
+          "/audio/stingers/stinger_boss_arrival.wav"
+        ],
+        "volume": 0.95,
+        "pitchRange": [1.0, 1.0],
+        "category": "music"
+      },
+      "victory": {
+        "files": [
+          "/audio/stingers/stinger_victory.wav"
+        ],
+        "volume": 0.9,
+        "pitchRange": [1.0, 1.0],
+        "category": "music"
+      },
+      "defeat": {
+        "files": [
+          "/audio/stingers/stinger_defeat.wav"
+        ],
+        "volume": 0.9,
+        "pitchRange": [1.0, 1.0],
+        "category": "music"
+      }
+    },
+    "announcer": {
+      "wave_start": {
+        "files": [
+          "/audio/announcer/announcer_wave_start.wav"
+        ],
+        "volume": 0.95,
+        "pitchRange": [0.98, 1.02],
+        "category": "voice",
+        "fallbackText": "Wave incoming. Defend the barricade!"
+      },
+      "boss_incoming": {
+        "files": [
+          "/audio/announcer/announcer_boss_incoming.wav"
+        ],
+        "volume": 1.0,
+        "pitchRange": [0.96, 1.0],
+        "category": "voice",
+        "fallbackText": "Warning! Giant boss approaching!"
+      },
+      "barricade_low": {
+        "files": [
+          "/audio/announcer/announcer_barricade_low.wav"
+        ],
+        "volume": 0.98,
+        "pitchRange": [0.98, 1.02],
+        "category": "voice",
+        "fallbackText": "Danger! Barricade integrity critical!"
+      },
+      "victory": {
+        "files": [
+          "/audio/announcer/announcer_victory.wav"
+        ],
+        "volume": 0.98,
+        "pitchRange": [0.98, 1.02],
+        "category": "voice",
+        "fallbackText": "Stage clear! Victory achieved!"
+      },
+      "defeat": {
+        "files": [
+          "/audio/announcer/announcer_defeat.wav"
+        ],
+        "volume": 0.98,
+        "pitchRange": [0.96, 1.0],
+        "category": "voice",
+        "fallbackText": "Barricade breached. Game over."
+      }
+    }
+  }
+}

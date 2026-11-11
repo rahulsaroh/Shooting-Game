@@ -1,0 +1,62 @@
+{
+  "phone-gun-01": {
+    "name": "Phone-Gun-01",
+    "tickets": 25,
+    "unlockedRewards": [
+      "skin_default",
+      "crosshair_default"
+    ],
+    "equippedSkin": "skin_default",
+    "equippedCrosshair": "crosshair_default"
+  },
+  "phone-gun-02": {
+    "name": "Phone-Gun-02",
+    "tickets": 25,
+    "unlockedRewards": [
+      "skin_default",
+      "crosshair_default"
+    ],
+    "equippedSkin": "skin_default",
+    "equippedCrosshair": "crosshair_default"
+  },
+  "phone-gun-03": {
+    "name": "Phone-Gun-03",
+    "tickets": 25,
+    "unlockedRewards": [
+      "skin_default",
+      "crosshair_default"
+    ],
+    "equippedSkin": "skin_default",
+    "equippedCrosshair": "crosshair_default"
+  },
+  "phone-gun-04": {
+    "name": "Phone-Gun-04",
+    "tickets": 25,
+    "unlockedRewards": [
+      "skin_default",
+      "crosshair_default"
+    ],
+    "equippedSkin": "skin_default",
+    "equippedCrosshair": "crosshair_default"
+  },
+  "phone-gun-05": {
+    "name": "Phone-Gun-05",
+    "tickets": 25,
+    "unlockedRewards": [
+      "skin_default",
+      "crosshair_default"
+    ],
+    "equippedSkin": "skin_default",
+    "equippedCrosshair": "crosshair_default"
+  },
+  "phone-gun-06": {
+    "name": "Phone-Gun-06",
+    "tickets": 25,
+    "unlockedRewards": [
+      "skin_default",
+      "crosshair_default"
+    ],
+    "equippedSkin": "skin_default",
+    "equippedCrosshair": "crosshair_default"
+  }
+}

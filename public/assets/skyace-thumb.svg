@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#04122c" />
+      <stop offset="50%" stop-color="#0c3b6e" />
+      <stop offset="85%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#facc15" />
+    </linearGradient>
+    <linearGradient id="jetBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="60%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="ringGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="100%" stop-color="#f97316" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#skyGrad)" />
+  <!-- Sun & Horizon Grid -->
+  <circle cx="580" cy="300" r="95" fill="#fde047" fill-opacity="0.85" />
+  <path d="M0 320 L800 320 L800 450 L0 450 Z" fill="#06152d" fill-opacity="0.88" />
+  <g stroke="#38bdf8" stroke-opacity="0.28" stroke-width="1.5">
+    <line x1="0" y1="350" x2="800" y2="350" />
+    <line x1="0" y1="385" x2="800" y2="385" />
+    <line x1="0" y1="425" x2="800" y2="425" />
+    <line x1="400" y1="320" x2="100" y2="450" />
+    <line x1="400" y1="320" x2="260" y2="450" />
+    <line x1="400" y1="320" x2="400" y2="450" />
+    <line x1="400" y1="320" x2="540" y2="450" />
+    <line x1="400" y1="320" x2="700" y2="450" />
+  </g>
+  <!-- Aerial Checkpoint Ring -->
+  <ellipse cx="595" cy="175" rx="68" ry="88" fill="none" stroke="url(#ringGlow)" stroke-width="10" stroke-dasharray="18 8" />
+  <ellipse cx="595" cy="175" rx="54" ry="72" fill="none" stroke="#38bdf8" stroke-width="3" stroke-opacity="0.8" />
+  <!-- Supersonic Fighter Jet Silhouette -->
+  <g transform="translate(275, 215) rotate(-14)">
+    <!-- Contrails -->
+    <path d="M-210 -22 L-45 -12" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" stroke-opacity="0.7" />
+    <path d="M-220 26 L-45 14" stroke="#f97316" stroke-width="6" stroke-linecap="round" stroke-opacity="0.7" />
+    <!-- Afterburner Flame -->
+    <polygon points="-95,0 -42,-14 -42,14" fill="#fde047" />
+    <polygon points="-130,0 -45,-8 -45,8" fill="#f97316" fill-opacity="0.85" />
+    <!-- Swept Wings -->
+    <polygon points="-35,-92 40,-10 10,10 -65,-80" fill="#0284c7" stroke="#bae6fd" stroke-width="2" />
+    <polygon points="-35,92 40,10 10,-10 -65,80" fill="#0369a1" stroke="#bae6fd" stroke-width="2" />
+    <!-- Fuselage -->
+    <polygon points="-55,-16 145,0 -55,16 -40,0" fill="url(#jetBody)" stroke="#e0f2fe" stroke-width="2.5" />
+    <!-- Canopy -->
+    <ellipse cx="38" cy="0" rx="28" ry="7" fill="#fde047" fill-opacity="0.9" stroke="#ffffff" stroke-width="1.5" />
+  </g>
+  <!-- HUD Overlay Reticle -->
+  <g stroke="#22d3ee" stroke-width="2" fill="none" opacity="0.8">
+    <circle cx="400" cy="225" r="140" stroke-dasharray="8 12" />
+    <path d="M350 225 L380 225 M420 225 L450 225 M400 185 L400 205" />
+  </g>
+</svg>

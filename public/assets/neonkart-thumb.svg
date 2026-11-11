@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090418" />
+      <stop offset="60%" stop-color="#240b4c" />
+      <stop offset="100%" stop-color="#4c0519" />
+    </linearGradient>
+    <linearGradient id="neonTrack" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f43f5e" />
+      <stop offset="50%" stop-color="#a855f7" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bgGrad)" />
+  <path d="M0 340 Q400 220 800 340 L800 450 L0 450 Z" fill="#0f0722" stroke="url(#neonTrack)" stroke-width="6" />
+  <g transform="translate(400, 260)">
+    <rect x="-110" y="-22" width="220" height="44" rx="18" fill="#1e1b4b" stroke="#22d3ee" stroke-width="4" />
+    <circle cx="-70" cy="24" r="24" fill="#090d16" stroke="#f43f5e" stroke-width="6" />
+    <circle cx="70" cy="24" r="24" fill="#090d16" stroke="#f43f5e" stroke-width="6" />
+    <polygon points="-40,-22 35,-22 65,-48 -20,-48" fill="#a855f7" fill-opacity="0.7" />
+  </g>
+</svg>

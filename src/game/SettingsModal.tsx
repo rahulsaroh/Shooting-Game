@@ -23,6 +23,7 @@ interface SettingsModalProps {
   onToggleMute?: () => void;
   onClose: () => void;
   onSave: (newSettings: Partial<GameSettings>) => void;
+  onBackToMenu?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -32,6 +33,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onToggleMute,
   onClose,
   onSave,
+  onBackToMenu,
 }) => {
   if (!isOpen) return null;
 
@@ -445,13 +447,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-display font-bold tracking-wider text-base transition cursor-pointer"
-        >
-          SAVE & RETURN TO ARCADE
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          {onBackToMenu && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onBackToMenu();
+              }}
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-950 hover:bg-slate-800 border-2 border-amber-400/70 text-amber-300 font-display font-bold tracking-wider text-sm transition cursor-pointer whitespace-nowrap"
+            >
+              ◀ BACK TO ARCADE MENU
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-display font-bold tracking-wider text-base transition cursor-pointer"
+          >
+            SAVE & RETURN TO ARCADE
+          </button>
+        </div>
       </div>
     </div>
   );

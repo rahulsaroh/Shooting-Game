@@ -36,7 +36,11 @@ import {
   X,
 } from 'lucide-react';
 
-export const ControllerApp: React.FC = () => {
+interface ControllerAppProps {
+  onBackToMenu?: () => void;
+}
+
+export const ControllerApp: React.FC<ControllerAppProps> = ({ onBackToMenu }) => {
   const [joined, setJoined] = useState(false);
   const [playerName, setPlayerName] = useState(
     () => localStorage.getItem('deadaim_player_name') || ''
@@ -719,6 +723,17 @@ export const ControllerApp: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
+          {onBackToMenu && (
+            <button
+              type="button"
+              onClick={onBackToMenu}
+              className="px-2 py-1.5 bg-slate-800 border border-white/25 rounded-lg text-[11px] font-bold text-cyan-300 flex items-center gap-1 active:scale-95"
+              title="Return to Arcade Game Selection Menu"
+            >
+              <span>◀ Menu</span>
+            </button>
+          )}
+
           {/* Rewards Locker Modal Button */}
           <button
             type="button"

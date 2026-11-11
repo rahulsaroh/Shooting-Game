@@ -1,0 +1,35 @@
+[
+  {
+    "id": "deadaim",
+    "title": "DeadAim Overdrive",
+    "description": "Co-op 3D light-gun zombie shooter across 3 boss stages with 4 arcade weapons and motion-aim calibration.",
+    "thumbnail": "/assets/aistudio/image_e9d504b0.png",
+    "minPlayers": 1,
+    "maxPlayers": 8,
+    "controllerType": "Motion Light-Gun (Gyro Aim + Trigger)",
+    "status": "available",
+    "folder": "/games/deadaim"
+  },
+  {
+    "id": "skyace",
+    "title": "SkyAce: Horizon Squadron",
+    "description": "Co-op 3D flight simulator & aerial ring/combat squadron. Steer with phone tilt-yoke, throttle slider, afterburners, and cannons.",
+    "thumbnail": "/assets/skyace-thumb.svg",
+    "minPlayers": 1,
+    "maxPlayers": 8,
+    "controllerType": "Tilt Flight Yoke + Throttle Deck",
+    "status": "available",
+    "folder": "/games/skyace"
+  },
+  {
+    "id": "neonkart",
+    "title": "Neon Drift GP",
+    "description": "8-player synthwave cyber-kart racing with tilt steering Wheel Mode and turbo drift pads.",
+    "thumbnail": "/assets/neonkart-thumb.svg",
+    "minPlayers": 1,
+    "maxPlayers": 8,
+    "controllerType": "Tilt Steering Wheel + Pedals",
+    "status": "coming_soon",
+    "folder": "/games/neonkart"
+  }
+]

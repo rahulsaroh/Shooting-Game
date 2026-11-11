@@ -26,7 +26,11 @@ import {
 } from '../../shared/types.ts';
 import { DEFAULT_SETTINGS, WEAPONS, ZOMBIE_VISUAL_SCALE } from '../../shared/config.ts';
 
-export const GameApp: React.FC = () => {
+interface GameAppProps {
+  onBackToMenu?: () => void;
+}
+
+export const GameApp: React.FC<GameAppProps> = ({ onBackToMenu }) => {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const threeSceneRef = useRef<ThreeScene | null>(null);
   const audioRef = useRef<AudioManager | null>(null);
@@ -706,6 +710,9 @@ export const GameApp: React.FC = () => {
         }
       } else if (e.code === 'Escape') {
         setSettingsOpen(false);
+        if (e.repeat && onBackToMenu) {
+          onBackToMenu();
+        }
       }
     };
 
@@ -719,6 +726,7 @@ export const GameApp: React.FC = () => {
     handleToggleMute,
     handleTriggerReviewScene,
     enqueueBanner,
+    onBackToMenu,
   ]);
 
   // Audio Controls
@@ -851,6 +859,7 @@ export const GameApp: React.FC = () => {
             onOpenSettings={() => setSettingsOpen(true)}
             onSpawnBots={handleSpawnBots}
             onRemoveBots={handleRemoveBots}
+            onBackToMenu={onBackToMenu}
           />
           {/* Live Aim Reticles in Lobby so players can test Flat-Phone Center & Tilt */}
           <div className="absolute inset-0 pointer-events-none z-40 overflow-hidden">
@@ -921,6 +930,7 @@ export const GameApp: React.FC = () => {
         onToggleMute={handleToggleMute}
         onClose={() => setSettingsOpen(false)}
         onSave={handleUpdateSettings}
+        onBackToMenu={onBackToMenu}
       />
 
       {/* Phase 3: Arcade Test Deck (SimulatorControls) is hidden by default and only shown when Debug Mode [F2] is active */}

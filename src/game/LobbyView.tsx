@@ -30,6 +30,7 @@ interface LobbyViewProps {
   onOpenSettings: () => void;
   onSpawnBots: (count: number) => void;
   onRemoveBots: () => void;
+  onBackToMenu?: () => void;
 }
 
 export const LobbyView: React.FC<LobbyViewProps> = ({
@@ -43,6 +44,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
   onOpenSettings,
   onSpawnBots,
   onRemoveBots,
+  onBackToMenu,
 }) => {
   const qrUrl = networkInfo?.controllerUrl || `${window.location.origin}/controller`;
   // Only show connected players/hosts (never show default empty placeholder slots)
@@ -220,6 +222,17 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             <Settings className="w-4 h-4 text-cyan-300" />
             <span>Game Options</span>
           </button>
+
+          {onBackToMenu && (
+            <button
+              type="button"
+              onClick={onBackToMenu}
+              className="px-3.5 py-2 bg-slate-900/90 hover:bg-slate-800 border border-cyan-400/50 rounded-xl text-xs font-display font-bold text-cyan-300 flex items-center gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
+              title="Return to Multi-Game Arcade Menu (or hold Esc)"
+            >
+              <span>◀ ARCADE MENU</span>
+            </button>
+          )}
         </div>
       </header>
 

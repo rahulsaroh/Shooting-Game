@@ -7,6 +7,10 @@ import { WebSocketServer, WebSocket } from 'ws';
 import QRCode from 'qrcode';
 import { GameEngine } from './server/GameEngine.ts';
 import { ClientMessage, ServerMessage, ServerNetworkInfo } from './shared/types.ts';
+import { PlatformManager } from './platform/server/PlatformManager.ts';
+import { PlatformClientMessage, PlatformServerMessage } from './platform/types.ts';
+import { createDeadAimServerAdapter } from './games/deadaim/index.ts';
+import { createSkyAcePlaceholderAdapter } from './games/skyace/index.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -101,6 +105,52 @@ setInterval(() => {
   gameEngine.tick();
 }, 1000 / 30);
 
+// Initialize Multi-Game Arcade Platform Manager
+const platformManager = new PlatformManager(
+  (msg: PlatformServerMessage) => {
+    const payload = JSON.stringify(msg);
+    for (const [ws] of clients.entries()) {
+      if (ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(payload);
+        } catch {
+          // ignore send errors on closing sockets
+        }
+      }
+    }
+  },
+  (playerId: string, msg: PlatformServerMessage) => {
+    const ws = playerSockets.get(playerId);
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.send(JSON.stringify(msg));
+      } catch {
+        // ignore send errors on closing sockets
+      }
+    }
+  }
+);
+
+platformManager.registerAdapter(createDeadAimServerAdapter(gameEngine));
+platformManager.registerAdapter(createSkyAcePlaceholderAdapter());
+
+// Platform API Routes
+app.get('/api/platform', (_req, res) => {
+  res.json({
+    state: platformManager.getState(),
+  });
+});
+
+app.post('/api/platform/action', (req, res) => {
+  try {
+    const msg = req.body as PlatformClientMessage;
+    platformManager.handleClientMessage(undefined, msg);
+    res.json({ ok: true, state: platformManager.getState() });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 // API Routes
 app.get('/api/info', async (_req, res) => {
   try {
@@ -185,11 +235,80 @@ wss.on('connection', (ws: WebSocket) => {
         phase: gameEngine.getPhase(),
       } as ServerMessage)
     );
+    ws.send(
+      JSON.stringify({
+        gameId: 'platform',
+        type: 'platform_state',
+        state: platformManager.getState(),
+      } as PlatformServerMessage)
+    );
   }
 
   ws.on('message', (data: Buffer | string) => {
     try {
-      const msg = JSON.parse(data.toString()) as ClientMessage;
+      const rawMsg = JSON.parse(data.toString());
+
+      // 1. Handle Platform-Namespaced Messages
+      if (
+        rawMsg?.gameId === 'platform' ||
+        (typeof rawMsg?.type === 'string' && rawMsg.type.startsWith('platform_'))
+      ) {
+        const clientMeta = clients.get(ws);
+        if (rawMsg.type === 'platform_join') {
+          if (clientMeta) clientMeta.type = 'phone';
+          const { player: deadAimPlayer, token } = gameEngine.handleJoin(
+            rawMsg.name,
+            rawMsg.color,
+            rawMsg.reconnectToken
+          );
+          const { player: platPlayer } = platformManager.handlePlayerJoin(
+            rawMsg.name,
+            rawMsg.color,
+            rawMsg.reconnectToken,
+            {
+              id: deadAimPlayer.id,
+              token,
+              slot: deadAimPlayer.slot,
+              color: deadAimPlayer.color,
+            }
+          );
+          if (clientMeta) clientMeta.playerId = platPlayer.id;
+          playerSockets.set(platPlayer.id, ws);
+
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(
+              JSON.stringify({
+                gameId: 'platform',
+                type: 'platform_joined',
+                player: platPlayer,
+                reconnectToken: token,
+                state: platformManager.getState(),
+              } as PlatformServerMessage)
+            );
+            ws.send(
+              JSON.stringify({
+                type: 'phone_joined',
+                player: deadAimPlayer,
+                reconnectToken: token,
+              } as ServerMessage)
+            );
+          }
+          return;
+        }
+
+        platformManager.handleClientMessage(
+          clientMeta?.playerId,
+          rawMsg as PlatformClientMessage
+        );
+        return;
+      }
+
+      // 2. Enforce Per-Game Message Namespacing Guard
+      if (!platformManager.canRouteGameMessage(rawMsg)) {
+        return;
+      }
+
+      const msg = rawMsg as ClientMessage;
 
       switch (msg.type) {
         case 'phone_join': {
@@ -201,6 +320,13 @@ wss.on('connection', (ws: WebSocket) => {
             msg.color,
             msg.reconnectToken
           );
+
+          platformManager.handlePlayerJoin(msg.name, msg.color, msg.reconnectToken, {
+            id: player.id,
+            token,
+            slot: player.slot,
+            color: player.color,
+          });
 
           if (clientMeta) clientMeta.playerId = player.id;
           playerSockets.set(player.id, ws);
@@ -344,6 +470,7 @@ wss.on('connection', (ws: WebSocket) => {
     const meta = clients.get(ws);
     if (meta?.playerId) {
       gameEngine.handleDisconnect(meta.playerId);
+      platformManager.handlePlayerDisconnect(meta.playerId);
       playerSockets.delete(meta.playerId);
     }
     clients.delete(ws);

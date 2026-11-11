@@ -1,0 +1,42 @@
+[
+  {
+    "initials": "ACE",
+    "name": "Agent Ace",
+    "score": 18500,
+    "stage": 3,
+    "wave": 6,
+    "date": "2026-11-01"
+  },
+  {
+    "initials": "GUN",
+    "name": "LightGunner",
+    "score": 14200,
+    "stage": 3,
+    "wave": 5,
+    "date": "2026-11-02"
+  },
+  {
+    "initials": "ZOM",
+    "name": "Slayer99",
+    "score": 11800,
+    "stage": 2,
+    "wave": 4,
+    "date": "2026-11-03"
+  },
+  {
+    "initials": "MAX",
+    "name": "MaxPower",
+    "score": 9400,
+    "stage": 2,
+    "wave": 3,
+    "date": "2026-11-04"
+  },
+  {
+    "initials": "KID",
+    "name": "PartyStar",
+    "score": 7200,
+    "stage": 1,
+    "wave": 2,
+    "date": "2026-11-05"
+  }
+]
